@@ -12,8 +12,12 @@
 
 use alloy_sol_types::SolType;
 use clap::Parser;
-use fibonacci_lib::PublicValuesStruct;
+// use fibonacci_lib::PublicValuesStruct;
+use fibonacci_lib::{AttestationDataVerified};
+
 use sp1_sdk::{include_elf, ProverClient, SP1Stdin};
+use std::fs;
+
 
 /// The ELF (executable and linkable format) file for the Succinct RISC-V zkVM.
 pub const FIBONACCI_ELF: &[u8] = include_elf!("fibonacci-program");
@@ -36,8 +40,9 @@ fn main() {
     // Setup the logger.
     sp1_sdk::utils::setup_logger();
     dotenv::dotenv().ok();
+    let json_data = fs::read("data/attestation_data_without_aes.json").expect("Failed to read file");
+    let json_str = String::from_utf8(json_data).expect("Invalid UTF-8 data");
 
-    // Parse the command line arguments.
     let args = Args::parse();
 
     if args.execute == args.prove {
@@ -50,7 +55,8 @@ fn main() {
 
     // Setup the inputs.
     let mut stdin = SP1Stdin::new();
-    stdin.write(&args.n);
+    // stdin.write(&args.n);
+    stdin.write(&json_str);
 
     println!("n: {}", args.n);
 
@@ -60,18 +66,15 @@ fn main() {
         println!("Program executed successfully.");
 
         // Read the output.
-        let decoded = PublicValuesStruct::abi_decode(output.as_slice()).unwrap();
-        let PublicValuesStruct { n, a, b } = decoded;
-        println!("n: {}", n);
-        println!("a: {}", a);
-        println!("b: {}", b);
+        let decoded = AttestationDataVerified::abi_decode(output.as_slice()).unwrap();
+        let AttestationDataVerified { screen_name, data_source } = decoded;
+        // screen_name 和 data_source 是 Bytes 类型，转换成 String：
+        let screen_name_str = String::from_utf8(screen_name.into()).expect("Invalid UTF-8 in screen_name");
+        let data_source_str = String::from_utf8(data_source.into()).expect("Invalid UTF-8 in data_source");
 
-        let (expected_a, expected_b) = fibonacci_lib::fibonacci(n);
-        assert_eq!(a, expected_a);
-        assert_eq!(b, expected_b);
-        println!("Values are correct!");
+        println!("screen_name: {}", screen_name_str);
+        println!("data_source: {}", data_source_str);
 
-        // Record the number of cycles executed.
         println!("Number of cycles: {}", report.total_instruction_count());
     } else {
         // Setup the program for proving.
@@ -82,11 +85,20 @@ fn main() {
             .prove(&pk, &stdin)
             .run()
             .expect("failed to generate proof");
-
+        println!("Proof is:{:?}",proof);
         println!("Successfully generated proof!");
 
         // Verify the proof.
         client.verify(&proof, &vk).expect("failed to verify proof");
         println!("Successfully verified proof!");
+
+        let decoded = AttestationDataVerified::abi_decode(proof.public_values.as_slice()).unwrap();
+        let AttestationDataVerified { screen_name, data_source } = decoded;
+        // screen_name 和 data_source 是 Bytes 类型，转换成 String：
+        let screen_name_str = String::from_utf8(screen_name.into()).expect("Invalid UTF-8 in screen_name");
+        let data_source_str = String::from_utf8(data_source.into()).expect("Invalid UTF-8 in data_source");
+
+        println!("screen_name: {}", screen_name_str);
+        println!("data_source: {}", data_source_str);
     }
 }

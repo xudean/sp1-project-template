@@ -6,4 +6,8 @@ edition = "2021"
 [dependencies]
 alloy-sol-types = { workspace = true }
 sp1-zkvm = "5.0.8"
+serde_json = "1.0"
+hex = "0.4"
 fibonacci-lib = { path = "../lib" }
+#zktls-att-verification = { git = "https://github.com/primus-labs/zktls-att-verification.git", branch = "main" }
+zktls-att-verification = { git = "https://github.com/primus-labs/zktls-att-verification.git", branch = "verify_without_tee" }

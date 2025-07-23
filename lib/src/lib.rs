@@ -7,6 +7,11 @@ sol! {
         uint32 a;
         uint32 b;
     }
+
+    struct AttestationDataVerified {
+        bytes screen_name;
+        bytes data_source;
+    }
 }
 
 /// Compute the n'th fibonacci number (wrapping around on overflows), using normal Rust code.
