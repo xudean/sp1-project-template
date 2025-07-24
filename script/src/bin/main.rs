@@ -17,6 +17,8 @@ use fibonacci_lib::{AttestationDataVerified};
 
 use sp1_sdk::{include_elf, ProverClient, SP1Stdin};
 use std::fs;
+use hex;
+
 
 
 /// The ELF (executable and linkable format) file for the Succinct RISC-V zkVM.
@@ -58,7 +60,6 @@ fn main() {
     // stdin.write(&args.n);
     stdin.write(&json_str);
 
-    println!("n: {}", args.n);
 
     if args.execute {
         // Execute the program
@@ -79,19 +80,21 @@ fn main() {
     } else {
         // Setup the program for proving.
         let (pk, vk) = client.setup(FIBONACCI_ELF);
-
+        // Print the verification key.
         // Generate the proof
         let proof = client
             .prove(&pk, &stdin)
             .run()
             .expect("failed to generate proof");
-        println!("Proof is:{:?}",proof);
-        println!("Successfully generated proof!");
+        //print proof
+        // let proof_hex = format!("0x{}", hex::encode(proof.bytes()));
+        // println!("proof (hex): {}", proof_hex);
 
         // Verify the proof.
         client.verify(&proof, &vk).expect("failed to verify proof");
         println!("Successfully verified proof!");
-
+        let public_values = hex::encode(&proof.public_values.as_slice());
+        println!("public_values (hex): {}", &public_values);
         let decoded = AttestationDataVerified::abi_decode(proof.public_values.as_slice()).unwrap();
         let AttestationDataVerified { screen_name, data_source } = decoded;
         // screen_name 和 data_source 是 Bytes 类型，转换成 String：

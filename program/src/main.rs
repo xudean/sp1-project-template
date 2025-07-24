@@ -36,8 +36,8 @@ pub fn main() {
     // // 验证 attestation data 根据 attestation config
     if let (Ok(public_data), Ok(attestation_config)) = (public_data, attestation_config) {
         public_data.verify_without_aes(&attestation_config);
-        println!("verify ok");
-        println!("public_data.data:{}", public_data.data);
+        println!("verify attestation ok!");
+        // println!("public_data.data:{}", public_data.data);
 
         let v: Value = serde_json::from_str(&public_data.data).unwrap();
 
